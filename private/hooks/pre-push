@@ -1,0 +1,80 @@
+#!/bin/sh
+# Route branches by prefix, and keep private/ out of the public remote.
+#
+#     private/*        -> the private remote, and nowhere else
+#     everything else  -> the public remote(s), and not the private one
+#     private/ paths   -> never in anything pushed to a public remote
+#
+# A remote counts as private only when explicitly flagged:
+#     git config remote.<name>.uoipPrivate true
+# Fail-closed: unflagged is treated as public, so adding a new remote never
+# silently opens a path for private material.
+#
+# CLAUDE.md: 本仓库对公，私有笔记对私，依赖方向是单向的。
+# Local file, not versioned — reinstall on a new machine:
+#     git show private/defence-notes:private/hooks/pre-push > .git/hooks/pre-push
+#     chmod +x .git/hooks/pre-push
+
+remote_name="$1"
+zero=0000000000000000000000000000000000000000
+
+is_private=$(git config --bool --get "remote.$remote_name.uoipPrivate" 2>/dev/null)
+[ "$is_private" = "true" ] || is_private=false
+
+refuse() {
+    echo "" >&2
+    echo "pre-push: REFUSED — $1" >&2
+    echo "  branch : $2" >&2
+    echo "  remote : $remote_name" >&2
+    echo "" >&2
+    exit 1
+}
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue   # deleting a ref is always fine
+
+    case "$local_ref$remote_ref" in
+        *refs/heads/private/*)
+            # --- private branch ---
+            [ "$is_private" = "true" ] || refuse \
+                "private branch to a public remote." "$local_ref"
+
+            # Rule 2: additive only. A hygiene rule, so warn — never block.
+            base=$(git merge-base "$local_sha" origin/main 2>/dev/null)
+            if [ -n "$base" ]; then
+                strays=$(git diff --name-only "$base" "$local_sha" -- \
+                         | grep -v '^private/' | head -5)
+                if [ -n "$strays" ]; then
+                    echo "" >&2
+                    echo "pre-push: WARNING — $local_ref changes files outside private/:" >&2
+                    echo "$strays" | sed 's/^/    /' >&2
+                    echo "  Rule 2 says private branches are additive. Pushing anyway." >&2
+                    echo "" >&2
+                fi
+            fi
+            ;;
+        refs/heads/*)
+            # --- public branch ---
+            [ "$is_private" = "false" ] || refuse \
+                "public branch to the private remote." "$local_ref"
+
+            # 🔴 Content guard. The prefix rules above only read branch NAMES;
+            # this is the one that catches private/ files committed onto a
+            # public branch by a stray `git add -A`.
+            if [ -n "$(git ls-tree -r --name-only "$local_sha" -- private/ | head -1)" ]; then
+                echo "" >&2
+                echo "pre-push: REFUSED — private/ files in a commit bound for a public remote." >&2
+                echo "  branch : $local_ref" >&2
+                echo "  remote : $remote_name" >&2
+                echo "  files  :" >&2
+                git ls-tree -r --name-only "$local_sha" -- private/ | head -5 | sed 's/^/      /' >&2
+                echo "" >&2
+                echo "  These belong on a private/* branch only. Remove them from" >&2
+                echo "  this branch's history before pushing." >&2
+                echo "" >&2
+                exit 1
+            fi
+            ;;
+    esac
+done
+exit 0
