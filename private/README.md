@@ -125,4 +125,6 @@ ToucanShelf，不属于 `docs/`。本目录承接的是**介于两者之间**的
 ## 内容
 
 - [`m1-defence.md`](m1-defence.md) — M1 统计答辩手册
+- [`20260919-four-questions.md`](20260919-four-questions.md) — 现场四问的技术侧复盘
+  （事件纪实本身在 ToucanShelf，两边刻意不重复）
 - `hooks/pre-push` — 拦截器副本，换机器时取回
