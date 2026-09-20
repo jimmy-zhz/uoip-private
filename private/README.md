@@ -149,4 +149,17 @@ CLAUDE.md「本仓库对公，私有笔记对私，依赖方向是单向的」�
 - [`m1-defence.md`](m1-defence.md) — M1 统计答辩手册
 - [`20260919-four-questions.md`](20260919-four-questions.md) — 现场四问的技术侧复盘
   （**这次现场技术侧的权威版本**；ToucanShelf 那篇纪实只保留人与场面）
+- [`qa-bank.md`](qa-bank.md) — Q&A 口径库，**迁自 ToucanShelf `UOIP/presentation/QA`**
+  （2026-09-20，本轮唯一一篇迁移）。禁语、保留条件、冻结 run id 都在里面，
+  必须跟仓库的数字同步——这是它归私库而不归 ToucanShelf 的原因。
 - `hooks/pre-push` — 拦截器副本，换机器时取回
+
+### 本轮没有迁移的（判定留 ToucanShelf）
+
+| 文档 | 为什么留 |
+|---|---|
+| `UOIP/presentation/SpeakerNote` · `20260901-32页PPT逐页讲稿` | 演讲交付物，讲的是「怎么讲」 |
+| `UOIP/presentation/HowToDeliver` · `20260828-60分钟演讲outline` | 台风与结构，与工程无关 |
+| `UOIP/presentation/20260901-TEMI-Review-25-slides-plan` | 合作关系 |
+| `UOIP/events/*`（含 `20260919-Day of Data 现场纪实`） | event |
+| `UOIP/milestone/*` · `UOIP/report/*` | 🟡 **按新规则该进私库，但等整体迁移策略** |
